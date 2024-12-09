@@ -1,10 +1,17 @@
+const gameDuration = 30.0;
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 canvas.onmousedown = onmousedown;
 canvas.onmouseup = onmouseup;
 canvas.onmousemove = onmousemove;
-const coinImage = new Image(48, 48);
+const coinImage = new Image();
 coinImage.src = "img/Apple.png"
+const goldImage = new Image();
+goldImage.src = "img/gold.png"
+const silverImage = new Image();
+silverImage.src = "img/silver.png"
+const bronzeImage = new Image();
+bronzeImage.src = "img/bronze.png"
 
 function getRandomInt(min, max) {
     return Math.floor(min + Math.random() * (max - min));
@@ -162,7 +169,7 @@ class Board {
     static scoreImageY = 0;
     constructor() {
         this.score = 0;
-        this.time = 40.0;
+        this.time = gameDuration;
         this.question = "7 x 8";
         this.currentQuestion = null;
         this.generator = new QuestionGenerator();
@@ -203,6 +210,8 @@ class Board {
                 if (this.time > 0) {
                     this.setQuestion();
                 } else {
+                    addScore(currentPlayer.name, this.score);
+                    save();
                     mainPage = new EndGamePage(this.score);
                 }
 
@@ -335,33 +344,31 @@ class MenuButton {
         this.mouseOver = false;
     }
 }
-class EndGamePage {
-    constructor(score) {
-        this.score = score;
-        const replayButton = new MenuButton(10, 500, "Replay", function () {
-            mainPage = new Board();
-        });
-        const changeUserButton = new MenuButton(300, 500, "Menu", function () {
-            mainPage = new ChoseProfilePage();
-        });
-        this.buttons = [replayButton, changeUserButton];
-    }
-    paint() {
-        ctx.drawImage(coinImage, 260, 300, 48, 48);
-        ctx.fillStyle = "black";
-        ctx.font = "24px Arial";
-        ctx.fillText(this.score, 300, 330);
-        for (const b of this.buttons) {
-            b.paint();
-        }
-    }
-    update() {
-    }
+
+function addScore(name, score) {
+    bestScores.push({ name, score, date: new Date().toLocaleDateString("en-GB") });
+    bestScores.sort((s1, s2) => s2.score - s1.score)
+    bestScores.splice(10);
 }
 let players = JSON.parse(localStorage.getItem("players") || "[]");
+let bestScores = JSON.parse(localStorage.getItem("bestScores") || "[]");
+if (bestScores.length == 0) {
+    addScore("Olive", 100);
+    addScore("Olive", 90);
+    addScore("Olive", 70);
+    addScore("Olive", 50);
+    addScore("Olive", 40);
+    addScore("Olive", 30);
+    addScore("Olive", 20);
+    addScore("Olive", 10);
+    addScore("Olive", 5);
+    addScore("Olive", 1);
+    save();
+}
 let currentPlayer = null;
 function save() {
     localStorage.setItem("players", JSON.stringify(players));
+    localStorage.setItem("bestScores", JSON.stringify(bestScores));
 }
 class ChoseProfilePage {
     constructor() {
@@ -409,6 +416,60 @@ class ChoseProfilePage {
     update() {
     }
 
+}
+
+class EndGamePage {
+    constructor(score) {
+        this.score = score;
+        const replayButton = new MenuButton(10, 500, "Replay", function () {
+            mainPage = new Board();
+        });
+        const changeUserButton = new MenuButton(300, 500, "Menu", function () {
+            mainPage = new ChoseProfilePage();
+        });
+        this.buttons = [replayButton, changeUserButton];
+    }
+    paint() {
+        ctx.fillStyle = "black";
+        ctx.font = "24px Arial";
+        ctx.fillText("You have done:", 100, 50 + 30);
+
+        ctx.drawImage(coinImage, 280, 50, 48, 48);
+        ctx.fillStyle = "black";
+        ctx.font = "24px Arial";
+        ctx.fillText(this.score, 320, 50 + 30);
+
+        ctx.fillStyle = "black";
+        ctx.font = "20px Arial";
+        ctx.fillText("Best scores:", 40, 150);
+
+        for (let i = 0; i < bestScores.length; i++) {
+            let img = null;
+            if(i == 0)
+                img = goldImage;
+            if(i==1)
+                img = silverImage;
+            if(i==2)
+                img = bronzeImage;
+            if(img)
+                ctx.drawImage(img, 36, 200 + 30 * i - 18, 20, 20);
+            ctx.fillStyle = "black";
+            ctx.font = "20px Arial";
+            let name = bestScores[i].name;
+            ctx.fillText(name, 60, 200 + 30 * i);
+
+            let score = "" + bestScores[i].score;
+            ctx.drawImage(coinImage, 300 - score.length * 10 - 40, 200 + 30 * i - 30, 48, 48);
+            ctx.fillText(score, 300 - score.length * 10, 200 + 30 * i);
+            ctx.fillText(bestScores[i].date, 450, 200 + 30 * i);
+        }
+
+        for (const b of this.buttons) {
+            b.paint();
+        }
+    }
+    update() {
+    }
 }
 
 function onmousedown(event) {
