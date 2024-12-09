@@ -324,8 +324,8 @@ class Button {
     mouseDown() {
         if (!this.isEnable)
             return;
+        this.mouseOver = false;
         this.board.onButtonClick(this.index);
-
     }
     mouseUp() { }
     mouseEnter() {
