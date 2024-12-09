@@ -162,7 +162,7 @@ class Board {
     static scoreImageY = 0;
     constructor() {
         this.score = 0;
-        this.time = 5.0;//40.0;
+        this.time = 40.0;
         this.question = "7 x 8";
         this.currentQuestion = null;
         this.generator = new QuestionGenerator();
