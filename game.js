@@ -17,6 +17,14 @@ function getRandomInt(min, max) {
     return Math.floor(min + Math.random() * (max - min));
 }
 
+function Mod2Pi(a) {
+    while (a < Math.PI)
+        a += 2 * Math.PI;
+    while (a > Math.PI)
+        a -= 2 * Math.PI;
+    return a;
+}
+
 class QuestionGenerator {
     constructor() {
         this.firstQuestion = true;
@@ -29,17 +37,17 @@ class QuestionGenerator {
             this.alreadyAskeds.push(label);
             return { a: 7, b: 8, r: 56, label, isHard: false };
         }
-        this.alreadyAskeds.splice(10);
+        this.alreadyAskeds.splice(20);
         while (true) {
             const a = getRandomInt(2, 9);
             const b = getRandomInt(2, 9);
-            const label = a + " x " + b            
+            const label = a + " x " + b
             if (this.alreadyAskeds.includes(label)) {
                 continue;
             }
             this.alreadyAskeds.push(label);
             let isHard = (a == 7 || a == 8) && (b == 3 || b == 4 || b == 7 || b == 8);
-            return { a, b, r: a*b, label, isHard };
+            return { a, b, r: a * b, label, isHard };
         }
     }
     getPropals(op) {
@@ -93,14 +101,6 @@ class QuestionGenerator {
         const props4 = this.getPropalsWithGoodSolutionDistributed(op);
         return { op: op, props: props4 };
     }
-}
-
-function Mod2Pi(a) {
-    while (a < Math.PI)
-        a += 2 * Math.PI;
-    while (a > Math.PI)
-        a -= 2 * Math.PI;
-    return a;
 }
 
 class CoinAnimation {
@@ -167,7 +167,7 @@ class AnimationSet {
 }
 
 class Board {
-    static scoreImageX = 400;
+    static scoreImageX = 360;
     static scoreImageY = 0;
     constructor() {
         this.score = 0;
@@ -179,12 +179,13 @@ class Board {
         this.numberOfAnswer = 0;
         this.animation = null;
         this.tickBeforeShowingQuestion = 5;
+        this.timingQuestion = 0;
     }
     paint() {
         ctx.drawImage(coinImage, Board.scoreImageX, Board.scoreImageY, 48, 48);
         ctx.fillStyle = "black";
         ctx.font = "24px Arial";
-        ctx.fillText(this.score, 440, 30);
+        ctx.fillText(this.score, Board.scoreImageX + 40, 30);
 
         ctx.fillStyle = "black";
         ctx.font = "24px Arial";
@@ -233,6 +234,7 @@ class Board {
         }
         if (this.numberOfAnswer > 0 && this.tickBeforeShowingQuestion <= 0) {
             this.time -= ellapsed / 1000;
+            this.timingQuestion += ellapsed / 1000;
         }
         if (this.time < 0) {
             this.time = 0;
@@ -240,6 +242,7 @@ class Board {
     }
     setQuestion() {
         this.tickBeforeShowingQuestion = 5;
+        this.timingQuestion = 0;
         this.currentQuestion = this.generator.next();
         this.question = this.currentQuestion.op.label;
         for (let i = 0; i < this.buttons.length; i++) {
@@ -255,12 +258,33 @@ class Board {
             this.buttons[index].isGood = true;
             this.goodAnswer(index);
         } else {
+            this.time -= 2;
             this.buttons[index].isBad = true;
         }
     }
     goodAnswer(index) {
         this.numberOfAnswer++;
-        const scoreIncr = this.numberOfAnswer + (this.currentQuestion.op.isHard ? 1 : 0);
+        let scoreIncr = this.numberOfAnswer;
+        if (this.numberOfAnswer == 1) {
+        } else if (this.timingQuestion < 0.8) {
+            scoreIncr += 5;
+            scoreIncr *= 4;
+        } else if (this.timingQuestion < 1.2) {
+            scoreIncr += 4;
+            scoreIncr *= 3;
+        } else if (this.timingQuestion < 2.0) {
+            scoreIncr += 3;
+            scoreIncr *= 2;
+        } else if (this.timingQuestion < 3.0) {
+            scoreIncr += 2;
+        } else if (this.timingQuestion < 5.0) {
+            scoreIncr += 1;
+        }        
+        if (this.currentQuestion.op.isHard) {
+            scoreIncr += 1 + Math.floor(Math.sqrt(this.numberOfAnswer));
+            scoreIncr *= 2;
+        }
+        console.log("timingQuestion: " + this.timingQuestion);
         const button = this.buttons[index];
         let anims = [];
         for (let i = 0; i < scoreIncr; i++) {
@@ -270,9 +294,7 @@ class Board {
     }
 }
 
-
 class Button {
-    static ClickTicks = 10;
     constructor(board, index) {
         this.board = board;
         this.index = index;
@@ -282,7 +304,6 @@ class Button {
         this.height = 80;
         this.label = "" + (10 + 8 * index);
         this.mouseOver = false;
-        this.clicking = -1;
         this.isEnable = true;
         this.isBad = false;
         this.isGood = false;
@@ -293,41 +314,25 @@ class Button {
                 : this.mouseOver ? "silver"
                     : "gray";
         ctx.fillRect(this.x, this.y, this.width, this.height);
-        if (this.clicking >= 0) {
-            ctx.fillStyle = "#fb4";
-            ctx.fillRect(this.x, this.y, this.width * (Math.min(this.clicking, Button.ClickTicks) / Button.ClickTicks), this.height);
-        }
+
         ctx.fillStyle = "black";
         ctx.font = "50px Arial";
         ctx.fillText(this.label, this.x + 150 - this.label.length * 16, this.y + 60);
 
     }
-    update() {
-        if (!this.isEnable)
-            return;
-        if (this.clicking >= 0)
-            this.clicking++;
-        if (this.clicking > Button.ClickTicks) {
-            this.clicking = 0;
-            this.board.onButtonClick(this.index);
-        }
-    }
+    update() { }
     mouseDown() {
         if (!this.isEnable)
             return;
-        if (this.clicking < 0)
-            this.clicking = 1;
+        this.board.onButtonClick(this.index);
 
     }
-    mouseUp() {
-        this.clicking = -1;
-    }
+    mouseUp() { }
     mouseEnter() {
         this.mouseOver = true;
     }
     mouseExit() {
         this.mouseOver = false;
-        this.clicking = -1;
     }
 }
 class MenuButton {
@@ -364,13 +369,13 @@ function addScore(name, score) {
 let players = JSON.parse(localStorage.getItem("players") || "[]");
 let bestScores = JSON.parse(localStorage.getItem("bestScores") || "[]");
 if (bestScores.length == 0) {
+    addScore("Olive", 500);
+    addScore("Olive", 400);
+    addScore("Olive", 300);
+    addScore("Olive", 200);
     addScore("Olive", 100);
-    addScore("Olive", 90);
-    addScore("Olive", 70);
     addScore("Olive", 50);
-    addScore("Olive", 40);
     addScore("Olive", 30);
-    addScore("Olive", 20);
     addScore("Olive", 10);
     addScore("Olive", 5);
     addScore("Olive", 1);
