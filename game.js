@@ -37,10 +37,12 @@ class QuestionGenerator {
             this.alreadyAskeds.push(label);
             return { a: 7, b: 8, r: 56, label, isHard: false };
         }
-        this.alreadyAskeds.splice(20);
+        if (this.alreadyAskeds.length > 20) {
+            this.alreadyAskeds.splice(0, 1);
+        }
         while (true) {
-            const a = getRandomInt(2, 9);
-            const b = getRandomInt(2, 9);
+            const a = getRandomInt(3, 10);
+            const b = getRandomInt(2, 10);
             const label = a + " x " + b
             if (this.alreadyAskeds.includes(label)) {
                 continue;
@@ -279,7 +281,7 @@ class Board {
             scoreIncr += 2;
         } else if (this.timingQuestion < 5.0) {
             scoreIncr += 1;
-        }        
+        }
         if (this.currentQuestion.op.isHard) {
             scoreIncr += 1 + Math.floor(Math.sqrt(this.numberOfAnswer));
             scoreIncr *= 2;
@@ -369,16 +371,16 @@ function addScore(name, score) {
 let players = JSON.parse(localStorage.getItem("players") || "[]");
 let bestScores = JSON.parse(localStorage.getItem("bestScores") || "[]");
 if (bestScores.length == 0) {
-    addScore("Olive", 500);
-    addScore("Olive", 400);
-    addScore("Olive", 300);
-    addScore("Olive", 200);
-    addScore("Olive", 100);
-    addScore("Olive", 50);
-    addScore("Olive", 30);
-    addScore("Olive", 10);
-    addScore("Olive", 5);
-    addScore("Olive", 1);
+    addScore("Olivier", 500);
+    addScore("Olivier", 450);
+    addScore("Olivier", 400);
+    addScore("Olivier", 350);
+    addScore("Olivier", 300);
+    addScore("Olivier", 250);
+    addScore("Olivier", 200);
+    addScore("Olivier", 150);
+    addScore("Olivier", 100);
+    addScore("Olivier", 50);
     save();
 }
 let currentPlayer = null;
