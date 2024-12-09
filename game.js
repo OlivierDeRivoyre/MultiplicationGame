@@ -176,6 +176,7 @@ class Board {
         this.buttons = [new Button(this, 0), new Button(this, 1), new Button(this, 2), new Button(this, 3)];
         this.numberOfAnswer = 0;
         this.animation = null;
+        this.tickBeforeShowingQuestion = 5;
     }
     paint() {
         ctx.drawImage(coinImage, Board.scoreImageX, Board.scoreImageY, 48, 48);
@@ -189,7 +190,11 @@ class Board {
 
         ctx.fillStyle = "black";
         ctx.font = "70px Arial";
-        ctx.fillText(this.question, 300 - this.question.length * 15, 250);
+        let label = "...";
+        if (this.tickBeforeShowingQuestion <= 0) {
+            label = this.question;
+        }
+        ctx.fillText(label, 300 - label.length * 15, 250);
 
         for (const b of this.buttons) {
             b.paint();
@@ -221,7 +226,10 @@ class Board {
         for (let c of this.buttons) {
             c.update();
         }
-        if (this.numberOfAnswer > 0) {
+        if (this.tickBeforeShowingQuestion > 0) {
+            this.tickBeforeShowingQuestion--;
+        }
+        if (this.numberOfAnswer > 0 && this.tickBeforeShowingQuestion <= 0) {
             this.time -= ellapsed / 1000;
         }
         if (this.time < 0) {
@@ -229,6 +237,7 @@ class Board {
         }
     }
     setQuestion() {
+        this.tickBeforeShowingQuestion = 5;
         this.currentQuestion = this.generator.next();
         this.question = this.currentQuestion.op.label;
         for (let i = 0; i < this.buttons.length; i++) {
@@ -445,13 +454,13 @@ class EndGamePage {
 
         for (let i = 0; i < bestScores.length; i++) {
             let img = null;
-            if(i == 0)
+            if (i == 0)
                 img = goldImage;
-            if(i==1)
+            if (i == 1)
                 img = silverImage;
-            if(i==2)
+            if (i == 2)
                 img = bronzeImage;
-            if(img)
+            if (img)
                 ctx.drawImage(img, 36, 200 + 30 * i - 18, 20, 20);
             ctx.fillStyle = "black";
             ctx.font = "20px Arial";
