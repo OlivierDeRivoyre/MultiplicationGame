@@ -20,24 +20,26 @@ function getRandomInt(min, max) {
 class QuestionGenerator {
     constructor() {
         this.firstQuestion = true;
-        this.previousResponse = 0;
+        this.alreadyAskeds = [];
     }
     getOperation() {
         if (this.firstQuestion) {
             this.firstQuestion = false;
-            this.previousResponse = 56;
-            return { a: 7, b: 8, r: 56, label: "7 x 8", isHard: false };
+            const label = "7 x 8";
+            this.alreadyAskeds.push(label);
+            return { a: 7, b: 8, r: 56, label, isHard: false };
         }
+        this.alreadyAskeds.splice(10);
         while (true) {
             const a = getRandomInt(2, 9);
             const b = getRandomInt(2, 9);
-            let response = a * b;
-            if (response === this.previousResponse) {
+            const label = a + " x " + b            
+            if (this.alreadyAskeds.includes(label)) {
                 continue;
             }
-            this.previousResponse = response;
+            this.alreadyAskeds.push(label);
             let isHard = (a == 7 || a == 8) && (b == 3 || b == 4 || b == 7 || b == 8);
-            return { a, b, r: response, label: a + " x " + b, isHard };
+            return { a, b, r: a*b, label, isHard };
         }
     }
     getPropals(op) {
@@ -288,11 +290,11 @@ class Button {
     paint() {
         ctx.fillStyle = this.isBad ? "red"
             : this.isGood ? "green"
-                : this.mouseOver ? "orange"
+                : this.mouseOver ? "silver"
                     : "gray";
         ctx.fillRect(this.x, this.y, this.width, this.height);
         if (this.clicking >= 0) {
-            ctx.fillStyle = "cyan";
+            ctx.fillStyle = "#fb4";
             ctx.fillRect(this.x, this.y, this.width * (Math.min(this.clicking, Button.ClickTicks) / Button.ClickTicks), this.height);
         }
         ctx.fillStyle = "black";
@@ -339,7 +341,7 @@ class MenuButton {
         this.mouseOver = false;
     }
     paint() {
-        ctx.fillStyle = this.mouseOver ? "orange" : "gray";
+        ctx.fillStyle = this.mouseOver ? "silver" : "gray";
         ctx.fillRect(this.x, this.y, this.width, this.height);
 
         ctx.fillStyle = "black";
