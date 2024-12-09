@@ -189,7 +189,9 @@ class Board {
         ctx.font = "24px Arial";
         ctx.fillText(this.score, Board.scoreImageX + 40, 30);
 
-        ctx.fillStyle = "black";
+        const timerColor = this.time > 5 ? "black" : "red";
+        this.paintTimer(485, 30 - 8, timerColor);
+        ctx.fillStyle = timerColor;
         ctx.font = "24px Arial";
         ctx.fillText(Number(this.time).toFixed(1), 500, 30);
 
@@ -208,6 +210,18 @@ class Board {
         if (this.animation != null) {
             this.animation.paint();
         }
+    }
+    paintTimer(x, y, color) {
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.arc(x, y, 9, 0, 2 * Math.PI);
+        ctx.stroke();
+        const angus = -Math.PI / 2 - this.time * 2 * Math.PI / 60 ;
+        ctx.beginPath(); 
+        ctx.moveTo(x, y); 
+        ctx.lineTo(x + 8 * Math.cos(angus), y + 8 * Math.sin(angus)); 
+        ctx.stroke(); 
     }
     update(ellapsed) {
         if (this.currentQuestion == null) {
@@ -260,7 +274,7 @@ class Board {
             this.buttons[index].isGood = true;
             this.goodAnswer(index);
         } else {
-            this.time -= 2;
+            this.time = Math.max(0, this.time - 5);
             this.buttons[index].isBad = true;
         }
     }
@@ -372,15 +386,15 @@ let players = JSON.parse(localStorage.getItem("players") || "[]");
 let bestScores = JSON.parse(localStorage.getItem("bestScores") || "[]");
 if (bestScores.length == 0) {
     addScore("Olivier", 500);
-    addScore("Olivier", 450);
     addScore("Olivier", 400);
-    addScore("Olivier", 350);
     addScore("Olivier", 300);
-    addScore("Olivier", 250);
     addScore("Olivier", 200);
     addScore("Olivier", 150);
     addScore("Olivier", 100);
     addScore("Olivier", 50);
+    addScore("Olivier", 20);
+    addScore("Olivier", 10);
+    addScore("Olivier", 1);
     save();
 }
 let currentPlayer = null;
