@@ -217,7 +217,7 @@ class Board {
         ctx.strokeStyle = color;
         ctx.arc(x, y, 9, 0, 2 * Math.PI);
         ctx.stroke();
-        const angus = -Math.PI / 2 - this.time * 2 * Math.PI / 60 ;
+        const angus = -Math.PI / 2 - 12 * this.time * 2 * Math.PI / 60 ;
         ctx.beginPath(); 
         ctx.moveTo(x, y); 
         ctx.lineTo(x + 8 * Math.cos(angus), y + 8 * Math.sin(angus)); 
