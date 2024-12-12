@@ -4,14 +4,22 @@ const ctx = canvas.getContext("2d");
 canvas.onmousedown = onmousedown;
 canvas.onmouseup = onmouseup;
 canvas.onmousemove = onmousemove;
-const coinImage = new Image();
-coinImage.src = "img/Apple.png"
+const coinImage1 = new Image();
+coinImage1.src = "img/Apple.png"
+const coinImage2 = new Image();
+coinImage2.src = "img/Cherries.png"
+const coinImage3 = new Image();
+coinImage3.src = "img/Strawberry.png"
+let coinImage = coinImage1;
 const goldImage = new Image();
 goldImage.src = "img/gold.png"
 const silverImage = new Image();
 silverImage.src = "img/silver.png"
 const bronzeImage = new Image();
 bronzeImage.src = "img/bronze.png"
+let level = 1;//1 easy, 2 intermediate, 3 expert
+let bestScores = [];
+let currentPlayer = null;
 
 function getRandomInt(min, max) {
     return Math.floor(min + Math.random() * (max - min));
@@ -25,31 +33,104 @@ function Mod2Pi(a) {
     return a;
 }
 
+const players = JSON.parse(localStorage.getItem("players") || "[]");
+const bestScores1 = JSON.parse(localStorage.getItem("bestScores1") || "[]");
+const bestScores2 = JSON.parse(localStorage.getItem("bestScores1") || "[]");
+const bestScores3 = JSON.parse(localStorage.getItem("bestScores1") || "[]");
+
+bestScores = bestScores1;
+if (bestScores.length == 0) {
+    addScore("Lillia", 500);
+    addScore("Frida", 400);
+    addScore("Noam", 300);
+    addScore("Olivier", 200);
+    addScore("Olivier", 150);
+    addScore("Olivier", 100);
+    addScore("Olivier", 50);
+    addScore("Olivier", 20);
+    addScore("Olivier", 10);
+    addScore("Olivier", 1);
+    save();
+}
+bestScores = bestScores2;
+if (bestScores.length == 0) {
+    addScore("Olivier", 500);
+    addScore("Nathanael", 400);
+    addScore("Clement", 300);
+    addScore("Olivier", 200);
+    addScore("Olivier", 150);
+    addScore("Olivier", 100);
+    addScore("Olivier", 50);
+    addScore("Olivier", 20);
+    addScore("Olivier", 10);
+    addScore("Olivier", 1);
+    save();
+}
+bestScores = bestScores3;
+if (bestScores.length == 0) {
+    addScore("Olivier", 500);
+    addScore("Nael", 400);
+    addScore("Nabil", 300);
+    addScore("Olivier", 200);
+    addScore("Olivier", 150);
+    addScore("Olivier", 100);
+    addScore("Olivier", 50);
+    addScore("Olivier", 20);
+    addScore("Olivier", 10);
+    addScore("Olivier", 1);
+    save();
+}
+
 class QuestionGenerator {
     constructor() {
         this.firstQuestion = true;
         this.alreadyAskeds = [];
     }
-    getOperation() {
+    getOperation1() {
+        const values = [1, 2, 5, 10];
+        const a = values[getRandomInt(0, values.length)];
+        const b = getRandomInt(1, 11);
+        const isHard = (a == 2 || a == 5) && (b == 6 || b == 7 || b == 8 || b == 9);
+        return { a, b, isHard };
+    }
+    getOperation2() {
+        const values = [2, 3, 4, 5, 6, 9, 10];
+        const a = values[getRandomInt(0, values.length)];
+        const b = getRandomInt(2, 10);
+        const isHard = (b == 6 || b == 7 || b == 8);
+        return { a, b, isHard };
+    }
+    getOperation3() {
         if (this.firstQuestion) {
             this.firstQuestion = false;
-            const label = "7 x 8";
-            this.alreadyAskeds.push(label);
-            return { a: 7, b: 8, r: 56, label, isHard: false };
+            return { b: 7, a: 8 };
         }
+        const a = getRandomInt(3, 10);
+        const b = getRandomInt(2, 10);
+        const isHard = (a == 7 || a == 8) && (b == 3 || b == 4 || b == 7 || b == 8);
+        return { a, b, isHard };
+    }
+    getOperationLevel() {
+        if (level == 1)
+            return this.getOperation1();
+        if (level == 2)
+            return this.getOperation2();
+        return this.getOperation3();
+    }
+    getOperation() {
         if (this.alreadyAskeds.length > 20) {
             this.alreadyAskeds.splice(0, 1);
         }
+
         while (true) {
-            const a = getRandomInt(3, 10);
-            const b = getRandomInt(2, 10);
-            const label = a + " x " + b
+            let op = this.getOperationLevel();
+            const label = op.a + " x " + op.b
             if (this.alreadyAskeds.includes(label)) {
                 continue;
             }
             this.alreadyAskeds.push(label);
-            let isHard = (a == 7 || a == 8) && (b == 3 || b == 4 || b == 7 || b == 8);
-            return { a, b, r: a * b, label, isHard };
+
+            return { a: op.a, b: op.b, r: op.a * op.b, label, isHard: op.isHard };
         }
     }
     getPropals(op) {
@@ -77,7 +158,7 @@ class QuestionGenerator {
         const props4 = [op.r];
         while (props4.length != 4) {
             const p = propals[getRandomInt(0, propals.length)];
-            if (!props4.includes(p)) {
+            if (p > 0 && !props4.includes(p)) {
                 props4.push(p);
             }
         }
@@ -217,11 +298,11 @@ class Board {
         ctx.strokeStyle = color;
         ctx.arc(x, y, 9, 0, 2 * Math.PI);
         ctx.stroke();
-        const angus = -Math.PI / 2 - 12 * this.time * 2 * Math.PI / 60 ;
-        ctx.beginPath(); 
-        ctx.moveTo(x, y); 
-        ctx.lineTo(x + 8 * Math.cos(angus), y + 8 * Math.sin(angus)); 
-        ctx.stroke(); 
+        const angus = -Math.PI / 2 - 12 * this.time * 2 * Math.PI / 60;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 8 * Math.cos(angus), y + 8 * Math.sin(angus));
+        ctx.stroke();
     }
     update(ellapsed) {
         if (this.currentQuestion == null) {
@@ -238,7 +319,6 @@ class Board {
                     save();
                     mainPage = new EndGamePage(this.score);
                 }
-
             }
             return;
         }
@@ -382,33 +462,20 @@ function addScore(name, score) {
     bestScores.sort((s1, s2) => s2.score - s1.score)
     bestScores.splice(10);
 }
-let players = JSON.parse(localStorage.getItem("players") || "[]");
-let bestScores = JSON.parse(localStorage.getItem("bestScores") || "[]");
-if (bestScores.length == 0) {
-    addScore("Olivier", 500);
-    addScore("Olivier", 400);
-    addScore("Olivier", 300);
-    addScore("Olivier", 200);
-    addScore("Olivier", 150);
-    addScore("Olivier", 100);
-    addScore("Olivier", 50);
-    addScore("Olivier", 20);
-    addScore("Olivier", 10);
-    addScore("Olivier", 1);
-    save();
-}
-let currentPlayer = null;
 function save() {
     localStorage.setItem("players", JSON.stringify(players));
-    localStorage.setItem("bestScores", JSON.stringify(bestScores));
+    localStorage.setItem("bestScores1", JSON.stringify(bestScores1));
+    localStorage.setItem("bestScores2", JSON.stringify(bestScores2));
+    localStorage.setItem("bestScores3", JSON.stringify(bestScores3));
 }
+
 class ChoseProfilePage {
     constructor() {
         this.buttons = [];
         for (let i = 0; i < players.length; i++) {
             let button = new MenuButton(50, 150 + 90 * i, players[i].name, function () {
                 currentPlayer = players[i];
-                mainPage = new Board();
+                mainPage = new ChoseLevelPage();
             });
             button.width = 420;
             this.buttons.push(button);
@@ -444,6 +511,59 @@ class ChoseProfilePage {
         for (const b of this.buttons) {
             b.paint();
         }
+    }
+    update() {
+    }
+}
+
+class ChoseLevelPage {
+    constructor() {
+        this.buttons = [];
+
+        let button1 = new MenuButton(50, 200 + 90 * 0, "Beginner (2x5)", function () {
+            level = 1;
+            coinImage = coinImage1;
+            bestScores = bestScores1;
+            mainPage = new Board();
+        });
+        button1.width = 500;
+        button1.img = coinImage1;
+        this.buttons.push(button1);
+        let button2 = new MenuButton(50, 200 + 90 * 1, "Intermediate (3x9)", function () {
+            level = 2;
+            coinImage = coinImage2;
+            bestScores = bestScores2;
+            mainPage = new Board();
+        });
+        button2.width = 500;
+        button2.img = coinImage2;
+        this.buttons.push(button2);
+        let button3 = new MenuButton(50, 200 + 90 * 2, "Expert (7x8)", function () {
+            level = 3;
+            coinImage = coinImage3;
+            bestScores = bestScores3;
+            mainPage = new Board();
+        });
+        button3.width = 500;
+        button3.img = coinImage3;
+        this.buttons.push(button3);
+    }
+    paint() {
+        ctx.fillStyle = "black";
+        ctx.font = "40px Arial";
+        ctx.fillText("Select difficulty", 100, 100);
+
+        for (const b of this.buttons) {
+            this.paintButton(b);
+        }
+    }
+    paintButton(button) {
+        ctx.fillStyle = button.mouseOver ? "silver" : "gray";
+        ctx.fillRect(button.x, button.y, button.width, button.height);
+        ctx.drawImage(button.img, button.x + 40, button.y + 20, 48, 48);
+        ctx.fillStyle = "black";
+        ctx.font = "40px Arial";
+        ctx.fillText(button.label, button.x + 100, button.y + 56);
     }
     update() {
     }
